@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GW — PATRIOT NETWORK</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #04080a;
+      --surface: #080e12;
+      --border: #1a2e38;
+      --border-bright: #1e4a5c;
+      --green: #00e5ff;
+      --green-dim: #007a8a;
+      --green-glow: rgba(0,229,255,0.15);
+      --amber: #ff9800;
+      --red: #f44336;
+      --text: #b0d8e0;
+      --muted: #3a5a65;
+      --metal: #8aacb8;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Share Tech Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      cursor: crosshair;
+    }
+
+    /* Scanlines overlay */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.08) 2px,
+        rgba(0,0,0,0.08) 4px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* Corner brackets mixin */
+    .bracketed {
+      position: relative;
+    }
+    .bracketed::before,
+    .bracketed::after {
+      content: '';
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-color: var(--green);
+      border-style: solid;
+    }
+    .bracketed::before { top: -1px; left: -1px; border-width: 1px 0 0 1px; }
+    .bracketed::after  { top: -1px; right: -1px; border-width: 1px 1px 0 0; }
+
+    /* ── Top bar ───────────────────────────────────── */
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      padding: 12px 32px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .topbar-label {
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .topbar-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0.3em;
+      color: var(--green);
+      text-align: center;
+      text-shadow: 0 0 20px rgba(0,229,255,0.5);
+    }
+
+    .topbar-right {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .clock {
+      font-size: 11px;
+      color: var(--metal);
+      letter-spacing: 0.1em;
+    }
+
+    .threat-badge {
+      font-size: 9px;
+      padding: 3px 10px;
+      border: 1px solid var(--amber);
+      color: var(--amber);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    /* ── Layout ───────────────────────────────────── */
+    .layout {
+      display: grid;
+      grid-template-columns: 220px 1fr 200px;
+      grid-template-rows: auto;
+      gap: 1px;
+      background: var(--border);
+      min-height: calc(100vh - 53px);
+    }
+
+    .panel {
+      background: var(--bg);
+      padding: 20px;
+    }
+
+    /* ── Left panel ───────────────────────────────── */
+    .panel-left {}
+
+    .panel-section {
+      margin-bottom: 28px;
+    }
+
+    .section-label {
+      font-size: 9px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s;
+      margin-bottom: 2px;
+      text-transform: uppercase;
+    }
+
+    .nav-item:hover { color: var(--text); border-color: var(--border); background: var(--surface); }
+    .nav-item.active { color: var(--green); border-color: var(--green-dim); background: var(--green-glow); }
+
+    .nav-item .nav-icon {
+      font-size: 8px;
+      opacity: 0.5;
+    }
+    .nav-item.active .nav-icon { opacity: 1; color: var(--green); }
+
+    /* ID card */
+    .id-card {
+      border: 1px solid var(--border-bright);
+      padding: 14px;
+      background: var(--surface);
+      position: relative;
+    }
+
+    .id-card::before, .id-card::after {
+      content: '';
+      position: absolute;
+      width: 8px; height: 8px;
+      border-color: var(--green-dim);
+      border-style: solid;
+    }
+    .id-card::before { top: -1px; left: -1px; border-width: 1px 0 0 1px; }
+    .id-card::after  { bottom: -1px; right: -1px; border-width: 0 1px 1px 0; }
+
+    .id-avatar {
+      width: 48px;
+      height: 48px;
+      border: 1px solid var(--border-bright);
+      background: var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Orbitron', monospace;
+      font-size: 18px;
+      font-weight: 900;
+      color: var(--green);
+      margin-bottom: 10px;
+      text-shadow: 0 0 12px rgba(0,229,255,0.6);
+    }
+
+    .id-name {
+      font-family: 'Orbitron', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--green);
+      letter-spacing: 0.1em;
+      margin-bottom: 4px;
+    }
+
+    .id-role {
+      font-size: 9px;
+      color: var(--muted);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .id-bar {
+      display: flex;
+      justify-content: space-between;
+      font-size: 9px;
+      color: var(--muted);
+      margin-bottom: 4px;
+      letter-spacing: 0.08em;
+    }
+
+    .id-progress {
+      height: 2px;
+      background: var(--border);
+      margin-bottom: 8px;
+    }
+
+    .id-progress-fill {
+      height: 100%;
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+    }
+
+    /* ── Center panel ─────────────────────────────── */
+    .panel-center {}
+
+    .center-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 24px;
+    }
+
+    .center-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--green);
+      letter-spacing: 0.15em;
+      text-shadow: 0 0 24px rgba(0,229,255,0.4);
+      line-height: 1.2;
+    }
+
+    .center-title small {
+      display: block;
+      font-size: 9px;
+      font-weight: 400;
+      color: var(--muted);
+      letter-spacing: 0.3em;
+      margin-top: 4px;
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    .sys-status {
+      font-size: 9px;
+      color: var(--green);
+      letter-spacing: 0.15em;
+      text-align: right;
+    }
+
+    .sys-status span { display: block; color: var(--muted); margin-bottom: 2px; }
+
+    /* Map / radar */
+    .radar-wrap {
+      border: 1px solid var(--border-bright);
+      background: var(--surface);
+      padding: 2px;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .radar-label {
+      position: absolute;
+      top: 10px;
+      left: 12px;
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      color: var(--green-dim);
+      z-index: 2;
+      text-transform: uppercase;
+    }
+
+    canvas#radar {
+      display: block;
+      width: 100%;
+      height: 200px;
+    }
+
+    /* Data grid */
+    .data-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .data-cell {
+      border: 1px solid var(--border);
+      padding: 12px 14px;
+      background: var(--surface);
+      position: relative;
+      transition: border-color 0.2s;
+    }
+
+    .data-cell:hover { border-color: var(--border-bright); }
+
+    .data-cell-label {
+      font-size: 8px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .data-cell-value {
+      font-family: 'Orbitron', monospace;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--green);
+      text-shadow: 0 0 12px rgba(0,229,255,0.4);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .data-cell-sub {
+      font-size: 9px;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+    }
+
+    .data-cell-value.amber { color: var(--amber); text-shadow: 0 0 12px rgba(255,152,0,0.4); }
+    .data-cell-value.red { color: var(--red); text-shadow: 0 0 12px rgba(244,67,54,0.4); }
+
+    /* Log */
+    .log-wrap {
+      border: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .log-header {
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .log-body {
+      padding: 12px 14px;
+      max-height: 160px;
+      overflow-y: auto;
+    }
+
+    .log-body::-webkit-scrollbar { width: 2px; }
+    .log-body::-webkit-scrollbar-track { background: var(--border); }
+    .log-body::-webkit-scrollbar-thumb { background: var(--green-dim); }
+
+    .log-entry {
+      display: flex;
+      gap: 12px;
+      font-size: 11px;
+      line-height: 1.8;
+      color: var(--muted);
+      border-bottom: 1px solid rgba(26,46,56,0.5);
+    }
+
+    .log-entry:last-child { border-bottom: none; }
+
+    .log-time { color: var(--green-dim); flex-shrink: 0; font-size: 10px; }
+    .log-msg { color: var(--text); }
+    .log-msg.warn { color: var(--amber); }
+    .log-msg.alert { color: var(--red); }
+
+    /* ── Right panel ──────────────────────────────── */
+    .panel-right { padding: 20px 16px; }
+
+    .mini-section { margin-bottom: 24px; }
+
+    .bar-item {
+      margin-bottom: 10px;
+    }
+
+    .bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 9px;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+
+    .bar-track {
+      height: 3px;
+      background: var(--border);
+    }
+
+    .bar-fill {
+      height: 100%;
+      background: var(--green);
+      box-shadow: 0 0 6px rgba(0,229,255,0.4);
+      transition: width 1.5s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    .bar-fill.amber { background: var(--amber); box-shadow: 0 0 6px rgba(255,152,0,0.4); }
+    .bar-fill.red { background: var(--red); box-shadow: 0 0 6px rgba(244,67,54,0.4); }
+
+    .alert-list { list-style: none; }
+
+    .alert-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 10px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .alert-item:last-child { border-bottom: none; }
+
+    .alert-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
+
+    .dot-green { background: var(--green); box-shadow: 0 0 5px var(--green); }
+    .dot-amber { background: var(--amber); box-shadow: 0 0 5px var(--amber); }
+    .dot-red { background: var(--red); box-shadow: 0 0 5px var(--red); animation: pulse 1s infinite; }
+
+    /* ── Bottom bar ───────────────────────────────── */
+    .bottombar {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 8px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 9px;
+      color: var(--muted);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .bottombar-center {
+      font-family: 'Orbitron', monospace;
+      font-size: 8px;
+      color: var(--border-bright);
+      letter-spacing: 0.2em;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; } to { opacity: 1; }
+    }
+
+    .layout { animation: fadeIn 0.8s ease both; }
+
+    /* ── OctoCamo Section ─────────────────────────── */
+    .octocamo-section {
+      background: var(--bg);
+      border-top: 1px solid var(--border-bright);
+      padding: 32px;
+      animation: fadeIn 0.8s 0.3s ease both;
+    }
+
+    .octocamo-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .octocamo-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: 0.25em;
+      color: var(--green);
+      text-shadow: 0 0 20px rgba(0,229,255,0.4);
+    }
+
+    .octocamo-title small {
+      display: block;
+      font-size: 8px;
+      font-weight: 400;
+      font-family: 'Share Tech Mono', monospace;
+      color: var(--muted);
+      letter-spacing: 0.3em;
+      margin-top: 3px;
+    }
+
+    .camo-sync-badge {
+      font-size: 9px;
+      padding: 4px 12px;
+      border: 1px solid var(--green-dim);
+      color: var(--green);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    .octocamo-grid {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 20px;
+    }
+
+    /* Canvas zone */
+    .camo-canvas-wrap {
+      border: 1px solid var(--border-bright);
+      background: #000;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .camo-canvas-wrap canvas {
+      display: block;
+      width: 100%;
+      height: 220px;
+    }
+
+    .camo-overlay-label {
+      position: absolute;
+      top: 10px;
+      left: 12px;
+      font-size: 8px;
+      letter-spacing: 0.2em;
+      color: rgba(0,229,255,0.5);
+      text-transform: uppercase;
+      pointer-events: none;
+    }
+
+    .camo-sync-bar-wrap {
+      position: absolute;
+      bottom: 10px;
+      left: 12px;
+      right: 12px;
+    }
+
+    .camo-sync-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 8px;
+      color: rgba(0,229,255,0.5);
+      letter-spacing: 0.1em;
+      margin-bottom: 4px;
+    }
+
+    .camo-sync-track {
+      height: 2px;
+      background: rgba(0,229,255,0.1);
+    }
+
+    .camo-sync-fill {
+      height: 100%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      transition: width 0.5s ease;
+    }
+
+    /* Right controls */
+    .camo-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .camo-control-block {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      padding: 14px;
+    }
+
+    .camo-control-label {
+      font-size: 8px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    /* Palette */
+    .palette-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+    }
+
+    .palette-swatch {
+      height: 28px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s;
+      position: relative;
+    }
+
+    .palette-swatch:hover { transform: scale(1.1); z-index: 2; }
+    .palette-swatch.active { border-color: var(--green); box-shadow: 0 0 8px rgba(0,229,255,0.4); }
+
+    /* Mode buttons */
+    .camo-modes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .camo-mode-btn {
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      padding: 7px 8px;
+      cursor: pointer;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: all 0.15s;
+      text-align: center;
+    }
+
+    .camo-mode-btn:hover { border-color: var(--border-bright); color: var(--text); }
+    .camo-mode-btn.active { background: var(--green-glow); border-color: var(--green-dim); color: var(--green); }
+
+    /* Stats row */
+    .camo-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .camo-stat {
+      text-align: center;
+      padding: 8px 4px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .camo-stat-val {
+      font-family: 'Orbitron', monospace;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--green);
+      text-shadow: 0 0 8px rgba(0,229,255,0.3);
+    }
+
+    .camo-stat-lbl {
+      font-size: 8px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="status-dot"></div>
+    <span class="topbar-label">System Online</span>
+    <span class="topbar-label" style="color: var(--border-bright)">|</span>
+    <span class="topbar-label">NODE-GW-04</span>
+  </div>
+  <div class="topbar-title">PATRIOT NETWORK // GW</div>
+  <div class="topbar-right">
+    <span class="clock" id="clock">--:--:--</span>
+    <div class="threat-badge">DEFCON 3</div>
+  </div>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div class="layout">
+
+  <!-- LEFT -->
+  <div class="panel panel-left">
+
+    <div class="panel-section">
+      <div class="section-label">Navigation</div>
+      <div class="nav-item active"><span class="nav-icon">▶</span> OVERVIEW</div>
+      <div class="nav-item"><span class="nav-icon">◆</span> CODEC FEED</div>
+      <div class="nav-item"><span class="nav-icon">◆</span> UNIT STATUS</div>
+      <div class="nav-item"><span class="nav-icon">◆</span> NANOMACHINE NET</div>
+      <div class="nav-item"><span class="nav-icon">◆</span> ARCHIVE</div>
+      <div class="nav-item"><span class="nav-icon">◆</span> DIRECTIVES</div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-label">Operator ID</div>
+      <div class="id-card">
+        <div class="id-avatar">GW</div>
+        <div class="id-name">OPERATOR</div>
+        <div class="id-role">Clearance Level — FOXDIE</div>
+        <div class="id-bar"><span>Nano sync</span><span>94%</span></div>
+        <div class="id-progress"><div class="id-progress-fill" style="width:94%"></div></div>
+        <div class="id-bar"><span>Auth token</span><span>VALID</span></div>
+        <div class="id-progress"><div class="id-progress-fill" style="width:100%"></div></div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-label">Quick Access</div>
+      <div class="nav-item"><span class="nav-icon">◆</span> PMC DATABASE</div>
+      <div class="nav-item"><span class="nav-icon">◆</span> WAR ECONOMY</div>
+      <div class="nav-item"><span class="nav-icon">◆</span> ID TAG SCAN</div>
+    </div>
+
+  </div>
+
+  <!-- CENTER -->
+  <div class="panel panel-center">
+
+    <div class="center-header">
+      <div class="center-title">
+        SYSTEM OVERVIEW
+        <small>// PATRIOTS ADVANCED AI · GLOBAL SURVEILLANCE NETWORK</small>
+      </div>
+      <div class="sys-status">
+        <span>UPTIME</span>
+        <span id="uptime" style="color:var(--green)">00:00:00</span>
+      </div>
+    </div>
+
+    <!-- Radar / map -->
+    <div class="radar-wrap">
+      <div class="radar-label">GLOBAL THEATER — LIVE FEED</div>
+      <canvas id="radar" height="200"></canvas>
+    </div>
+
+    <!-- Data cells -->
+    <div class="data-grid">
+      <div class="data-cell">
+        <div class="data-cell-label">Active PMC Units</div>
+        <div class="data-cell-value" id="pmc">1,482</div>
+        <div class="data-cell-sub">↑ +34 last cycle</div>
+      </div>
+      <div class="data-cell">
+        <div class="data-cell-label">Nano ID Tags</div>
+        <div class="data-cell-value amber" id="tags">98.7%</div>
+        <div class="data-cell-sub">Sync coverage</div>
+      </div>
+      <div class="data-cell">
+        <div class="data-cell-label">Threat Index</div>
+        <div class="data-cell-value red" id="threat">HIGH</div>
+        <div class="data-cell-sub">Fox Unit detected</div>
+      </div>
+      <div class="data-cell">
+        <div class="data-cell-label">Codec Intercepts</div>
+        <div class="data-cell-value" id="codec">3,291</div>
+        <div class="data-cell-sub">Last 24h</div>
+      </div>
+      <div class="data-cell">
+        <div class="data-cell-label">GW Core Load</div>
+        <div class="data-cell-value amber" id="load">71%</div>
+        <div class="data-cell-sub">Processing</div>
+      </div>
+      <div class="data-cell">
+        <div class="data-cell-label">War Economy</div>
+        <div class="data-cell-value" id="economy">$4.2B</div>
+        <div class="data-cell-sub">Active contracts</div>
+      </div>
+    </div>
+
+    <!-- Log -->
+    <div class="log-wrap">
+      <div class="log-header">
+        <span>System Log</span>
+        <span id="logCount">6 entries</span>
+      </div>
+      <div class="log-body" id="logBody">
+        <div class="log-entry"><span class="log-time">04:12:03</span><span class="log-msg alert">ALERT — Unregistered biometric signature · Middle East theater</span></div>
+        <div class="log-entry"><span class="log-time">04:09:47</span><span class="log-msg warn">WARN — Codec frequency anomaly · 140.85 MHz</span></div>
+        <div class="log-entry"><span class="log-time">04:07:22</span><span class="log-msg">PMC Praying Mantis — patrol route updated</span></div>
+        <div class="log-entry"><span class="log-time">04:05:18</span><span class="log-msg">Nanosync batch complete · 14,302 units</span></div>
+        <div class="log-entry"><span class="log-time">04:01:00</span><span class="log-msg">War economy report generated · Sector 7</span></div>
+        <div class="log-entry"><span class="log-time">03:58:44</span><span class="log-msg">GW backup node synchronized</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT -->
+  <div class="panel panel-right">
+
+    <div class="mini-section">
+      <div class="section-label">PMC Strength</div>
+      <div class="bar-item">
+        <div class="bar-label"><span>Praying Mantis</span><span>87%</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:0%" data-w="87"></div></div>
+      </div>
+      <div class="bar-item">
+        <div class="bar-label"><span>Raven Sword</span><span>62%</span></div>
+        <div class="bar-track"><div class="bar-fill amber" style="width:0%" data-w="62"></div></div>
+      </div>
+      <div class="bar-item">
+        <div class="bar-label"><span>Pieuvre Armement</span><span>45%</span></div>
+        <div class="bar-track"><div class="bar-fill amber" style="width:0%" data-w="45"></div></div>
+      </div>
+      <div class="bar-item">
+        <div class="bar-label"><span>Werewolf</span><span>91%</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:0%" data-w="91"></div></div>
+      </div>
+      <div class="bar-item">
+        <div class="bar-label"><span>Vista Indigo</span><span>28%</span></div>
+        <div class="bar-track"><div class="bar-fill red" style="width:0%" data-w="28"></div></div>
+      </div>
+    </div>
+
+    <div class="mini-section">
+      <div class="section-label">Priority Alerts</div>
+      <ul class="alert-list">
+        <li class="alert-item">
+          <div class="alert-dot dot-red"></div>
+          <span>Fox Unit · last seen Shadow Moses vicinity</span>
+        </li>
+        <li class="alert-item">
+          <div class="alert-dot dot-amber"></div>
+          <span>Codec anomaly · possible rebel encryption</span>
+        </li>
+        <li class="alert-item">
+          <div class="alert-dot dot-amber"></div>
+          <span>PMC Vista Indigo — critical losses</span>
+        </li>
+        <li class="alert-item">
+          <div class="alert-dot dot-green"></div>
+          <span>Nanosync coverage nominal · Europe theater</span>
+        </li>
+        <li class="alert-item">
+          <div class="alert-dot dot-green"></div>
+          <span>War economy index stable</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="mini-section">
+      <div class="section-label">Network Nodes</div>
+      <div class="bar-item">
+        <div class="bar-label"><span>GW Core</span><span>Online</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:0%" data-w="100"></div></div>
+      </div>
+      <div class="bar-item">
+        <div class="bar-label"><span>TJ Node</span><span>Standby</span></div>
+        <div class="bar-track"><div class="bar-fill amber" style="width:0%" data-w="40"></div></div>
+      </div>
+      <div class="bar-item">
+        <div class="bar-label"><span>AL Node</span><span>Offline</span></div>
+        <div class="bar-track"><div class="bar-fill red" style="width:0%" data-w="8"></div></div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- OCTOCAMO SECTION -->
+<div class="octocamo-section">
+  <div class="octocamo-header">
+    <div class="octocamo-title">
+      OCTOCAMO SYSTEM
+      <small>// ADAPTIVE CAMOUFLAGE INTERFACE · NANOSKIN v2.4</small>
+    </div>
+    <div class="camo-sync-badge" id="camoSyncBadge">SYNC: 0%</div>
+  </div>
+
+  <div class="octocamo-grid">
+    <div class="camo-canvas-wrap">
+      <div class="camo-overlay-label">LIVE PATTERN FEED</div>
+      <canvas id="camoCanvas" height="220"></canvas>
+      <div class="camo-sync-bar-wrap">
+        <div class="camo-sync-label">
+          <span>Nanoskin Sync</span>
+          <span id="camoSyncPct">0%</span>
+        </div>
+        <div class="camo-sync-track">
+          <div class="camo-sync-fill" id="camoSyncFill" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="camo-controls">
+      <div class="camo-control-block">
+        <div class="camo-control-label">Palette de camouflage</div>
+        <div class="palette-grid" id="paletteGrid"></div>
+      </div>
+
+      <div class="camo-control-block">
+        <div class="camo-control-label">Mode de camouflage</div>
+        <div class="camo-modes">
+          <button class="camo-mode-btn active" data-mode="organic">Organic</button>
+          <button class="camo-mode-btn" data-mode="urban">Urban</button>
+          <button class="camo-mode-btn" data-mode="digital">Digital</button>
+          <button class="camo-mode-btn" data-mode="thermal">Thermal</button>
+        </div>
+      </div>
+
+      <div class="camo-stats">
+        <div class="camo-stat">
+          <div class="camo-stat-val" id="camoTemp">36.4°</div>
+          <div class="camo-stat-lbl">Temp</div>
+        </div>
+        <div class="camo-stat">
+          <div class="camo-stat-val" id="camoSync2">--</div>
+          <div class="camo-stat-lbl">Sync</div>
+        </div>
+        <div class="camo-stat">
+          <div class="camo-stat-val" id="camoPower">98%</div>
+          <div class="camo-stat-lbl">Power</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM BAR -->
+<div class="bottombar">
+  <span>Patriots Network v4.0 · Restricted Access</span>
+  <span class="bottombar-center">LA LI LU LE LO</span>
+  <span>© The Patriots — All warfare is based on deception</span>
+</div>
+
+<script>
+  // ── Clock ────────────────────────────────────────
+  function updateClock() {
+    const now = new Date();
+    document.getElementById('clock').textContent =
+      now.toTimeString().slice(0,8);
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  // ── Uptime ───────────────────────────────────────
+  let uptimeSeconds = 0;
+  setInterval(() => {
+    uptimeSeconds++;
+    const h = String(Math.floor(uptimeSeconds / 3600)).padStart(2,'0');
+    const m = String(Math.floor((uptimeSeconds % 3600) / 60)).padStart(2,'0');
+    const s = String(uptimeSeconds % 60).padStart(2,'0');
+    document.getElementById('uptime').textContent = `${h}:${m}:${s}`;
+  }, 1000);
+
+  // ── Animate bars ─────────────────────────────────
+  setTimeout(() => {
+    document.querySelectorAll('.bar-fill[data-w]').forEach(bar => {
+      bar.style.width = bar.dataset.w + '%';
+    });
+  }, 400);
+
+  // ── Radar canvas ─────────────────────────────────
+  const canvas = document.getElementById('radar');
+  const ctx = canvas.getContext('2d');
+
+  function resizeCanvas() {
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  // Blips
+  const blips = Array.from({length: 18}, () => ({
+    x: Math.random(),
+    y: Math.random(),
+    type: Math.random() > 0.85 ? 'hostile' : Math.random() > 0.6 ? 'friendly' : 'neutral',
+    size: Math.random() * 2 + 1.5,
+    alpha: Math.random(),
+    alphaDir: Math.random() > 0.5 ? 1 : -1
+  }));
+
+  let scanAngle = 0;
+
+  function drawRadar() {
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    // Background
+    ctx.fillStyle = '#06100f';
+    ctx.fillRect(0, 0, W, H);
+
+    // Grid lines
+    ctx.strokeStyle = 'rgba(0,70,50,0.3)';
+    ctx.lineWidth = 0.5;
+    const cols = 12, rows = 4;
+    for (let i = 1; i < cols; i++) {
+      ctx.beginPath();
+      ctx.moveTo(W * i / cols, 0);
+      ctx.lineTo(W * i / cols, H);
+      ctx.stroke();
+    }
+    for (let i = 1; i < rows; i++) {
+      ctx.beginPath();
+      ctx.moveTo(0, H * i / rows);
+      ctx.lineTo(W, H * i / rows);
+      ctx.stroke();
+    }
+
+    // Scan sweep
+    const cx = W * 0.15, cy = H * 0.5, r = H * 0.8;
+    const grad = ctx.createConicalGradient
+      ? null
+      : null;
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(scanAngle);
+    const sweep = ctx.createLinearGradient(0, 0, r, 0);
+    sweep.addColorStop(0, 'rgba(0,229,255,0.25)');
+    sweep.addColorStop(1, 'rgba(0,229,255,0)');
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, r, -0.4, 0.4);
+    ctx.closePath();
+    ctx.fillStyle = sweep;
+    ctx.fill();
+    ctx.restore();
+
+    scanAngle += 0.015;
+
+    // Blips
+    blips.forEach(b => {
+      b.alpha += b.alphaDir * 0.02;
+      if (b.alpha > 1 || b.alpha < 0.2) b.alphaDir *= -1;
+
+      const x = b.x * W, y = b.y * H;
+      const color = b.type === 'hostile' ? '#f44336' : b.type === 'friendly' ? '#00e5ff' : '#ff9800';
+      ctx.beginPath();
+      ctx.arc(x, y, b.size, 0, Math.PI * 2);
+      ctx.fillStyle = color.replace(')', `,${b.alpha})`).replace('rgb', 'rgba');
+      ctx.shadowBlur = 6;
+      ctx.shadowColor = color;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    });
+
+    // Scan line
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(scanAngle);
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(r, 0);
+    ctx.strokeStyle = 'rgba(0,229,255,0.6)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.restore();
+
+    requestAnimationFrame(drawRadar);
+  }
+
+  drawRadar();
+
+  // ── Live data flicker ────────────────────────────
+  function randFlicker(el, base, suffix = '', isInt = true) {
+    const delta = isInt
+      ? Math.floor(Math.random() * 5) - 2
+      : (Math.random() * 0.4 - 0.2).toFixed(1);
+    const val = isInt ? base + delta : (parseFloat(base) + parseFloat(delta)).toFixed(1);
+    el.textContent = val + suffix;
+  }
+
+  setInterval(() => {
+    const pmc = document.getElementById('pmc');
+    const cur = parseInt(pmc.textContent.replace(',',''));
+    const next = cur + Math.floor(Math.random() * 7) - 3;
+    pmc.textContent = next.toLocaleString();
+
+    const codec = document.getElementById('codec');
+    const c = parseInt(codec.textContent.replace(',',''));
+    codec.textContent = (c + Math.floor(Math.random() * 10)).toLocaleString();
+  }, 3000);
+
+  // ── Nav items ────────────────────────────────────
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+    });
+  });
+
+  // ── OctoCamo ─────────────────────────────────────
+  const PALETTES = {
+    organic: ['#1a2e1a','#2d4a1e','#3d5c2a','#4e6e35','#6b8c42','#8aaa55','#a8c870','#c4e08a','#d8ee9a','#edf5b0'],
+    urban:   ['#1c1c1c','#2e2e2e','#3d3d3d','#4f4f4f','#636363','#7a7a7a','#949494','#b0b0b0','#c8c8c8','#e0e0e0'],
+    digital: ['#001a0d','#003320','#004d33','#006644','#008055','#1a9966','#33b377','#4dcc88','#66e699','#80ffaa'],
+    thermal: ['#0d0028','#200050','#3d0080','#6600b3','#9900cc','#bf00ff','#d940ff','#ee80ff','#f5b3ff','#fce6ff'],
+  };
+
+  let camoMode = 'organic';
+  let activePalette = PALETTES.organic;
+  let activeSwatchIdx = 4;
+  let camoSyncValue = 0;
+  let camoParticles = [];
+
+  // Build palette swatches
+  function buildPalette(mode) {
+    const grid = document.getElementById('paletteGrid');
+    grid.innerHTML = '';
+    PALETTES[mode].forEach((color, i) => {
+      const sw = document.createElement('div');
+      sw.className = 'palette-swatch' + (i === activeSwatchIdx ? ' active' : '');
+      sw.style.background = color;
+      sw.addEventListener('click', () => {
+        activeSwatchIdx = i;
+        document.querySelectorAll('.palette-swatch').forEach((s,j) => s.classList.toggle('active', j===i));
+      });
+      grid.appendChild(sw);
+    });
+  }
+
+  buildPalette(camoMode);
+
+  // Mode buttons
+  document.querySelectorAll('.camo-mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.camo-mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      camoMode = btn.dataset.mode;
+      activePalette = PALETTES[camoMode];
+      activeSwatchIdx = 4;
+      buildPalette(camoMode);
+      camoParticles = [];
+    });
+  });
+
+  // Canvas setup
+  const camoCanvas = document.getElementById('camoCanvas');
+  const camoCtx = camoCanvas.getContext('2d');
+
+  function resizeCamo() {
+    camoCanvas.width = camoCanvas.offsetWidth;
+    camoCanvas.height = camoCanvas.offsetHeight;
+    camoParticles = [];
+  }
+  resizeCamo();
+  window.addEventListener('resize', resizeCamo);
+
+  // Init particles
+  function initParticles() {
+    const W = camoCanvas.width, H = camoCanvas.height;
+    if (camoParticles.length < 120) {
+      for (let i = camoParticles.length; i < 120; i++) {
+        camoParticles.push({
+          x: Math.random() * W,
+          y: Math.random() * H,
+          w: Math.random() * 40 + 10,
+          h: Math.random() * 30 + 8,
+          angle: Math.random() * Math.PI,
+          color: activePalette[Math.floor(Math.random() * activePalette.length)],
+          alpha: Math.random() * 0.7 + 0.2,
+          alphaDir: Math.random() > 0.5 ? 1 : -1,
+          speed: Math.random() * 0.3 + 0.05,
+          dx: (Math.random() - 0.5) * 0.4,
+          dy: (Math.random() - 0.5) * 0.4,
+        });
+      }
+    }
+  }
+
+  function drawCamo() {
+    const W = camoCanvas.width, H = camoCanvas.height;
+    initParticles();
+
+    // Fade background
+    camoCtx.fillStyle = 'rgba(0,0,0,0.06)';
+    camoCtx.fillRect(0, 0, W, H);
+
+    camoParticles.forEach(p => {
+      // Update
+      p.x += p.dx;
+      p.y += p.dy;
+      p.alpha += p.alphaDir * 0.004;
+      if (p.alpha > 0.85) p.alphaDir = -1;
+      if (p.alpha < 0.1)  p.alphaDir = 1;
+      if (p.x < -50) p.x = W + 50;
+      if (p.x > W + 50) p.x = -50;
+      if (p.y < -50) p.y = H + 50;
+      if (p.y > H + 50) p.y = -50;
+
+      // Draw organic blob
+      camoCtx.save();
+      camoCtx.translate(p.x, p.y);
+      camoCtx.rotate(p.angle);
+      camoCtx.globalAlpha = p.alpha;
+
+      if (camoMode === 'digital') {
+        // Sharp rectangles for digital mode
+        camoCtx.fillStyle = p.color;
+        camoCtx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      } else {
+        // Soft ellipses for others
+        camoCtx.beginPath();
+        camoCtx.ellipse(0, 0, p.w, p.h, 0, 0, Math.PI * 2);
+        camoCtx.fillStyle = p.color;
+        camoCtx.fill();
+      }
+
+      camoCtx.restore();
+    });
+
+    // Occasional color refresh
+    if (Math.random() < 0.008) {
+      const p = camoParticles[Math.floor(Math.random() * camoParticles.length)];
+      p.color = activePalette[Math.floor(Math.random() * activePalette.length)];
+    }
+
+    // Grid overlay for digital mode
+    if (camoMode === 'digital') {
+      camoCtx.strokeStyle = 'rgba(0,255,100,0.06)';
+      camoCtx.lineWidth = 0.5;
+      for (let x = 0; x < W; x += 16) {
+        camoCtx.beginPath(); camoCtx.moveTo(x,0); camoCtx.lineTo(x,H); camoCtx.stroke();
+      }
+      for (let y = 0; y < H; y += 16) {
+        camoCtx.beginPath(); camoCtx.moveTo(0,y); camoCtx.lineTo(W,y); camoCtx.stroke();
+      }
+    }
+
+    requestAnimationFrame(drawCamo);
+  }
+
+  drawCamo();
+
+  // Sync bar animation
+  let syncTarget = 0;
+  setInterval(() => {
+    syncTarget = Math.min(100, syncTarget + Math.floor(Math.random() * 8) + 1);
+    if (syncTarget >= 100) syncTarget = Math.floor(Math.random() * 30) + 60;
+    camoSyncValue = syncTarget;
+
+    document.getElementById('camoSyncFill').style.width = syncTarget + '%';
+    document.getElementById('camoSyncPct').textContent = syncTarget + '%';
+    document.getElementById('camoSync2').textContent = syncTarget + '%';
+    document.getElementById('camoSyncBadge').textContent = 'SYNC: ' + syncTarget + '%';
+  }, 800);
+
+  // Temp flicker
+  setInterval(() => {
+    const t = (36 + Math.random() * 1.5).toFixed(1);
+    document.getElementById('camoTemp').textContent = t + '°';
+  }, 2000);
+</script>
+</body>
+</html>
